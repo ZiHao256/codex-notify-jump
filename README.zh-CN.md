@@ -4,13 +4,32 @@
 
 一个面向 Codex CLI 的 macOS 可点击通知工具。通知中会带有 `Jump` 按钮，点击后可回到原始的 Ghostty + tmux pane。
 
-## 它能做什么
+`codex-notify-jump` 只解决一个非常具体的问题：当 Codex 完成一轮任务或需要审批时，你能收到一条原生 macOS 通知，并通过 `Jump` 按钮直接跳回最初启动该会话的 Ghostty + tmux pane。
 
-- 为 Codex CLI 事件发送 macOS 系统通知
-- 在通知中加入 `Jump` 按钮
-- 激活 Ghostty，并切回最初触发通知的 tmux pane
+这个仓库刻意保持小而专。首版只支持：
 
-这个仓库刻意保持小而专。首版只支持 `macOS + Ghostty + tmux + Codex CLI`。
+- macOS
+- Ghostty
+- tmux
+- Codex CLI
+- zsh
+
+## 你会得到什么
+
+- 为 `agent-turn-complete` 和 `approval-requested` 发送原生 macOS 通知
+- 一个可靠的 `Jump` 按钮
+- 优先复用现有 tmux client 的 pane 回跳逻辑
+- 一套可以独立于你个人 `~/.codex` 仓库维护的小型工具
+
+## 快速开始
+
+1. 克隆仓库
+2. 把 Codex 的 `notify` 指向 [`bin/notify.py`](bin/notify.py)
+3. 把 [`examples/zshrc.snippet`](examples/zshrc.snippet) 中的 wrapper 加到 `~/.zshrc`
+4. 重新加载 shell
+5. 在 Ghostty + tmux 中运行 Codex，并点击通知里的 `Jump`
+
+如果你要完整安装步骤，继续往下看。
 
 ## 支持环境
 
@@ -25,9 +44,19 @@
 ## 工作原理
 
 1. shell wrapper 在启动 `codex` 之前，先采集当前 Ghostty terminal id 和 tmux pane 元信息。
-2. Codex 调用配置好的 `notify.py` hook。
-3. `notify.py` 使用本地 Swift helper 构建带 `Jump` 按钮的可点击通知。
+2. Codex 调用配置好的 [`notify.py`](bin/notify.py) hook。
+3. [`notify.py`](bin/notify.py) 使用本地 Swift helper 构建带 `Jump` 按钮的可点击通知。
 4. 点击 `Jump` 后，Ghostty 被激活，tmux client 切回原 pane。
+
+当前实现使用显式 `Jump` 按钮，而不是依赖点击通知正文，因为在当前 macOS 版本上这条路径更稳定。
+
+## 仓库结构
+
+```text
+bin/       运行时代码与本地 Swift notifier
+examples/  可复制到你自己环境中的最小配置样例
+tests/     通知路由与 tmux helper 的单元测试
+```
 
 ## 安装
 
@@ -125,6 +154,8 @@ python3 /ABSOLUTE/PATH/TO/codex-notify-jump/bin/tmux_current_target.py
 ```bash
 swiftc --version
 ```
+
+首次触发通知时会自动编译本地 Swift helper。
 
 ### 点击 `Jump` 只激活了 Ghostty
 

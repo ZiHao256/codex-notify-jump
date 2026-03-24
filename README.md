@@ -1,16 +1,35 @@
 # codex-notify-jump
 
-[中文说明](README.zh-CN.md)
+[简体中文说明](README.zh-CN.md)
 
 Clickable macOS notifications for Codex CLI that jump back to the originating Ghostty + tmux pane.
 
-## What It Does
+`codex-notify-jump` solves one specific workflow problem: when Codex finishes a turn or needs approval, you get a native macOS notification with a `Jump` button that takes you back to the exact Ghostty + tmux pane where the session started.
 
-- Sends macOS notifications for Codex CLI events
-- Adds a `Jump` button to each notification
-- Activates Ghostty and switches back to the originating tmux pane
+The scope is intentionally narrow. The first release supports only:
 
-This repository is intentionally narrow in scope. The first release only targets `macOS + Ghostty + tmux + Codex CLI`.
+- macOS
+- Ghostty
+- tmux
+- Codex CLI
+- zsh
+
+## What You Get
+
+- Native macOS notifications for `agent-turn-complete` and `approval-requested`
+- A reliable `Jump` action button
+- tmux pane restoration through client reuse before opening a new Ghostty window
+- A small, test-backed setup that can live outside your personal `~/.codex` repository
+
+## Quick Start
+
+1. Clone this repository.
+2. Point Codex `notify` to [`bin/notify.py`](bin/notify.py).
+3. Add the wrapper from [`examples/zshrc.snippet`](examples/zshrc.snippet) to your `~/.zshrc`.
+4. Reload your shell.
+5. Run Codex inside Ghostty + tmux and click `Jump` on a notification.
+
+If you want the exact commands, keep reading.
 
 ## Supported Environment
 
@@ -25,9 +44,19 @@ This repository is intentionally narrow in scope. The first release only targets
 ## How It Works
 
 1. A shell wrapper captures the current Ghostty terminal id and tmux pane metadata before launching `codex`.
-2. Codex calls the configured `notify.py` hook.
-3. `notify.py` builds a clickable local notifier with a `Jump` action.
+2. Codex calls the configured [`notify.py`](bin/notify.py) hook.
+3. [`notify.py`](bin/notify.py) builds a local clickable notifier with a `Jump` action.
 4. Clicking `Jump` focuses Ghostty and switches the tmux client back to the original pane.
+
+The current implementation uses an explicit action button instead of relying on notification body clicks, because that path proved more reliable on current macOS versions.
+
+## Repository Layout
+
+```text
+bin/       Runtime scripts and the local Swift notifier
+examples/  Minimal config snippets to copy into your own setup
+tests/     Unit tests for notification routing and tmux helpers
+```
 
 ## Installation
 
@@ -125,6 +154,8 @@ Check that the bundled notifier can be compiled:
 ```bash
 swiftc --version
 ```
+
+The first notification compiles the local Swift helper automatically.
 
 ### Clicking `Jump` only activates Ghostty
 
