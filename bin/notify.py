@@ -5,7 +5,6 @@ import shlex
 import shutil
 import subprocess
 import sys
-import time
 from typing import Mapping, Optional
 
 SUPPORTED_NOTIFICATION_TYPES = {
@@ -167,7 +166,7 @@ def send_codex_clickable_notification(
     if not notifier_path:
         return False
 
-    process = subprocess.Popen(
+    result = subprocess.run(
         [
             "open",
             "-na",
@@ -184,11 +183,9 @@ def send_codex_clickable_notification(
         stdin=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-        start_new_session=True,
-        text=True,
+        check=False,
     )
-    time.sleep(0.3)
-    return process.poll() is None
+    return result.returncode == 0
 
 
 def is_supported_notification_type(notification_type: object) -> bool:

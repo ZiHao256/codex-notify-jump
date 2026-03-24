@@ -134,6 +134,24 @@ class NotifyTests(unittest.TestCase):
             ],
         )
 
+    def test_send_codex_clickable_notification_uses_open_returncode(self) -> None:
+        with mock.patch.object(notify, "ensure_codex_notifier", return_value="/tmp/codex-notifier"):
+            with mock.patch.object(
+                notify.subprocess,
+                "run",
+                return_value=SimpleNamespace(returncode=0),
+            ) as run_mock:
+                sent = notify.send_codex_clickable_notification(
+                    "Codex: ready",
+                    "Dir: /Users/tester/project",
+                    thread_id="thread-1",
+                    click_command="python3 /tmp/focus.py",
+                )
+
+        self.assertTrue(sent)
+        run_mock.assert_called_once()
+        self.assertEqual(run_mock.call_args.args[0][0:4], ["open", "-na", mock.ANY, "--args"])
+
     def test_main_prefers_codex_notifier_over_terminal_notifier(self) -> None:
         payload = (
             '{"type":"agent-turn-complete","last-assistant-message":"prefer native",'
