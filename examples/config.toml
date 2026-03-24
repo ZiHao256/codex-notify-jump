@@ -1,0 +1,4 @@
+notify = ["python3", "/ABSOLUTE/PATH/TO/codex-notify-jump/bin/notify.py"]
+
+[tui]
+notifications = ["agent-turn-complete", "approval-requested"]

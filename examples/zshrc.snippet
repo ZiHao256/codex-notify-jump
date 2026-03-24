@@ -1,0 +1,53 @@
+export CODEX_NOTIFY_JUMP_ROOT="/ABSOLUTE/PATH/TO/codex-notify-jump"
+
+codex() {
+  local ghostty_terminal_id=""
+  local tmux_socket_path=""
+  local tmux_session_id=""
+  local tmux_window_id=""
+  local tmux_pane_id=""
+  local tmux_client_tty=""
+  local tmux_session_name=""
+  local tmux_target_json=""
+
+  if [[ -f "$CODEX_NOTIFY_JUMP_ROOT/bin/ghostty_current_terminal_id.py" ]]; then
+    ghostty_terminal_id="$(python3 "$CODEX_NOTIFY_JUMP_ROOT/bin/ghostty_current_terminal_id.py" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "$ghostty_terminal_id" ]]; then
+    export CODEX_GHOSTTY_TERM_ID="$ghostty_terminal_id"
+  else
+    unset CODEX_GHOSTTY_TERM_ID
+  fi
+
+  if [[ -n "${TMUX:-}" ]] && [[ -f "$CODEX_NOTIFY_JUMP_ROOT/bin/tmux_current_target.py" ]]; then
+    tmux_target_json="$(python3 "$CODEX_NOTIFY_JUMP_ROOT/bin/tmux_current_target.py" 2>/dev/null || true)"
+
+    if [[ -n "$tmux_target_json" ]]; then
+      tmux_socket_path="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("socket_path") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+      tmux_session_id="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("session_id") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+      tmux_window_id="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("window_id") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+      tmux_pane_id="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("pane_id") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+      tmux_client_tty="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("client_tty") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+      tmux_session_name="$(python3 -c 'import json, sys; data = json.load(sys.stdin); print(data.get("session_name") or "")' <<<"$tmux_target_json" 2>/dev/null || true)"
+    fi
+  fi
+
+  if [[ -n "$tmux_socket_path" && -n "$tmux_session_id" && -n "$tmux_window_id" && -n "$tmux_pane_id" && -n "$tmux_client_tty" ]]; then
+    export CODEX_TMUX_SOCKET_PATH="$tmux_socket_path"
+    export CODEX_TMUX_SESSION_ID="$tmux_session_id"
+    export CODEX_TMUX_WINDOW_ID="$tmux_window_id"
+    export CODEX_TMUX_PANE_ID="$tmux_pane_id"
+    export CODEX_TMUX_CLIENT_TTY="$tmux_client_tty"
+    export CODEX_TMUX_SESSION_NAME="$tmux_session_name"
+  else
+    unset CODEX_TMUX_SOCKET_PATH
+    unset CODEX_TMUX_SESSION_ID
+    unset CODEX_TMUX_WINDOW_ID
+    unset CODEX_TMUX_PANE_ID
+    unset CODEX_TMUX_CLIENT_TTY
+    unset CODEX_TMUX_SESSION_NAME
+  fi
+
+  command codex "$@"
+}
